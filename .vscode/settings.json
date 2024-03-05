@@ -1,0 +1,10 @@
+{
+    "files.associations": {
+        "bsp_driver_sd.h": "c",
+        "fatfs.h": "c",
+        "main.h": "c",
+        "stm32l4xx_hal.h": "c",
+        "sd_init.h": "c",
+        "stm32l4xx_hal_wwdg.h": "c"
+    }
+}
