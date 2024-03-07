@@ -286,8 +286,8 @@ imu_status_t ICM20649_Set_Sample_Rate(I2C_HandleTypeDef *hi2c)
 	if((configbyte &0b1) > 0)
 	{
 		smplrtdiv= (uint8_t)(GYRO_OUTPUT_RATE_DLPF_EN/SAMPLE_RATE - 1);
-		printmsg("Gyro DPLF Enabled! \r\n");
-	}else
+	}
+	else
 	{
 		smplrtdiv = (uint8_t)(GYRO_OUTPUT_RATE_DLPF_DIS/SAMPLE_RATE -1);
 	}
@@ -433,7 +433,7 @@ imu_status_t ICM20649_Set_PLLSrc(I2C_HandleTypeDef *hi2c, uint8_t PLL)
 	return IMU_OK;
 }
 
-imu_status_t ICM20649_Config_Interrupt_Pin( uint8_t level,uint8_t open,  uint8_t latch)
+imu_status_t ICM20649_Config_Interrupt_Pin( Interrupt_source_t level,uint8_t open,  uint8_t latch)
 {
 	ICM20649_Register_Bank_Select(&hi2c1, 0);
 

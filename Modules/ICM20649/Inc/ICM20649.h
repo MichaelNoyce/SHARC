@@ -43,6 +43,15 @@ extern "C" {
 #include "stdint.h"			//integers
 #include "string.h"			//Mem functions
 
+//============================= 0. Handlers ===============================================
+
+extern I2C_HandleTypeDef hi2c1;
+
+extern DMA_HandleTypeDef hdma_i2c1_rx;
+
+extern DMA_HandleTypeDef hdma_i2c1_tx;
+
+
 //========================== 2. Structs & Enums ===========================================
 
 /*

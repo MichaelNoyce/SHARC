@@ -1,7 +1,6 @@
 #include "main.hpp"
 #include "init.h"
 #include "SD_init.h"
-#include "ICM20649_init.h"
 #include "string.h"
 #include <stdarg.h>
 #include "stdio.h"
@@ -21,9 +20,6 @@ UART_HandleTypeDef huart2;
 RTC_HandleTypeDef hrtc;
 bool watchMe = false;
 HAL_StatusTypeDef  UARTStatus;
-bool bullshit_variable = false;
-
-
 
 int main(void) {
 	HAL_Init();
@@ -32,12 +28,10 @@ int main(void) {
 	MX_GPIO_Init_SD(); 
 	MX_SDMMC1_SD_Init();
 	MX_LPUART1_UART_Init(); 
-	IMU_Interface_Init(); 
 	UARTStatus = HAL_ERROR; 
 
 	HAL_Delay(5000);
 
-	bullshit_variable = true; 
 	uint8_t Test[] = "Hello World !!!\r\n"; //Data to send
 	UARTStatus = HAL_UART_Transmit(&hlpuart1,Test,sizeof(Test),100);// Sending in normal mode
 
