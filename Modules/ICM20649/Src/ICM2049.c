@@ -298,8 +298,6 @@ imu_status_t ICM20649_Set_Sample_Rate(I2C_HandleTypeDef *hi2c)
 		return IMU_I2C_ERROR;
 	}
 
-	printmsg("Gyro smplrt: %d \r\n", smplrtdiv);
-
 	configbyte = 0;
 	smplrtdiv = 0;
 
@@ -310,7 +308,6 @@ imu_status_t ICM20649_Set_Sample_Rate(I2C_HandleTypeDef *hi2c)
 
 	if((configbyte &0b1) > 0)
 	{
-		printmsg("Accel DPLF Enabled! \r\n");
 		smplrtdiv= (uint16_t)(ACC_OUTPUT_RATE_DLPF_EN/SAMPLE_RATE - 1);
 	}else
 	{
@@ -321,9 +318,6 @@ imu_status_t ICM20649_Set_Sample_Rate(I2C_HandleTypeDef *hi2c)
 	{
 		return IMU_I2C_ERROR;
 	}
-
-	printmsg("Accel smplrt: %d \r\n", smplrtdiv);
-
 
 	return IMU_OK;
 }

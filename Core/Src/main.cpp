@@ -1,10 +1,17 @@
 #include "main.hpp"
+
+#ifdef __cplusplus 
+extern "C" {
+#endif
+#include "fatfs.h"
+#include "HAL_SD.h" 
 #include "init.h"
-#include "SD_init.h"
 #include "string.h"
 #include <stdarg.h>
 #include "stdio.h"
-
+#ifdef __cplusplus 
+}
+#endif
 
 void SystemClock_Config(void);
 void Error_Handler(void);
@@ -13,31 +20,40 @@ UART_HandleTypeDef hlpuart1;
 UART_HandleTypeDef huart4;
 DMA_HandleTypeDef hdma_uart4_rx;
 DMA_HandleTypeDef hdma_uart4_tx;
-SD_HandleTypeDef hsd1;
 TIM_HandleTypeDef htim1;
 DMA_HandleTypeDef hdma_memtomem_dma1_channel1;
 UART_HandleTypeDef huart2;
 RTC_HandleTypeDef hrtc;
-bool watchMe = false;
 HAL_StatusTypeDef  UARTStatus;
+SD_HandleTypeDef hsd1;
 
 int main(void) {
 	HAL_Init();
 	SystemClock_Config();
 	MX_GPIO_Init();
-	MX_GPIO_Init_SD(); 
-	MX_SDMMC1_SD_Init();
 	MX_LPUART1_UART_Init(); 
+	MX_SDMMC1_SD_Init();
+	MX_FATFS_Init();
 	UARTStatus = HAL_ERROR; 
 
-	HAL_Delay(5000);
+  uint8_t errorCode = SD_Init();
+  printmsg("Error Code, %d \r\n", errorCode);
 
-	uint8_t Test[] = "Hello World !!!\r\n"; //Data to send
-	UARTStatus = HAL_UART_Transmit(&hlpuart1,Test,sizeof(Test),100);// Sending in normal mode
+  uint8_t waveBufferSegment[] = "-0.024, 0.038, 9.992, 3.603, 71.756, -8.321, -18.448 \r\n";
+  waveLogNo = 0;
+  waveDirNo = 0;
 
-	HAL_Delay(5000);
+  //Single Write Test
 
-	SD_Init();
+  //Open wave Log
+  SD_Wave_Open(&File, &Dir, &fno, waveDirNo, waveLogNo);
+
+  printmsg("File opened!");
+  //Write to wave log
+  SD_File_Write(&File, waveBufferSegment);
+  //Close Wave Log
+  SD_File_Close(&File);
+
 }
 
 

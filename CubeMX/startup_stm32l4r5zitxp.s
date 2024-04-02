@@ -101,7 +101,7 @@ LoopFillZerobss:
 	bl	main
 
 LoopForever:
-    b LoopForever
+`    b LoopForever
     
 .size	Reset_Handler, .-Reset_Handler
 

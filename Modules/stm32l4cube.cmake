@@ -11,11 +11,13 @@ set(STM32CUBEL4_HAL_INCLUDE_DIRECTORIES
 	${CMAKE_SOURCE_DIR}/Modules/STM32CubeL4/Drivers/STM32L4xx_HAL_Driver/Inc/Legacy
 	${CMAKE_SOURCE_DIR}/Modules/STM32CubeL4/Drivers/CMSIS/Device/ST/STM32L4xx/Include
 	${CMAKE_SOURCE_DIR}/Modules/STM32CubeL4/Drivers/CMSIS/Include
+	${CMAKE_SOURCE_DIR}/Modules/STM32CubeL4/Drivers/CMSIS/DSP/Include
 )
 
 file(GLOB STM32CUBEL4_HAL_SOURCES
 	${CMAKE_SOURCE_DIR}/Modules/STM32CubeL4/Drivers/STM32L4xx_HAL_Driver/Src/*_hal*.c
 	${CMAKE_SOURCE_DIR}/Modules/STM32CubeL4/Drivers/STM32L4xx_HAL_Driver/Src/*_ll*.c
+	${CMAKE_SOURCE_DIR}/Modules/STM32CubeL4/Drivers/CMSIS/DSP/Lib/GCC #Location of arm_mathl4 library
 )
 
 # Workaround - Broken template files should not be compiled.
@@ -29,6 +31,7 @@ add_library(STM32CUBEL4_HAL STATIC
 set(STM32CUBEL4_HAL_COMPILE_DEFINITIONS
 	USE_HAL_DRIVER
 	STM32L4R5xx
+	ARM_MATH_CM4
 )
 
 target_compile_definitions(STM32CUBEL4_HAL PUBLIC

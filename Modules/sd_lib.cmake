@@ -4,11 +4,11 @@
 # - SHARC::SD
 
 set(STM32_HAL_SD_DRIVER_INCLUDE_DIRECTORIES
-	${CMAKE_SOURCE_DIR}/Modules/SD/Inc
+	PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/SD/Inc
 )
 
-file(GLOB STM32_HAL_SD_DRIVER_SOURCES
-	${CMAKE_SOURCE_DIR}/Modules/SD/Src/HAL_SD.c
+set(STM32_HAL_SD_DRIVER_SOURCES
+	${CMAKE_CURRENT_SOURCE_DIR}/SD/Src/HAL_SD.c
 )
 
 # Workaround - Broken template files should not be compiled.
@@ -20,8 +20,10 @@ add_library(STM32_HAL_SD_DRIVER STATIC
 )
 
 
-target_include_directories(STM32_HAL_SD_DRIVER SYSTEM
+target_include_directories(STM32_HAL_SD_DRIVER
 	PUBLIC ${STM32_HAL_SD_DRIVER_INCLUDE_DIRECTORIES}
 )
+
+
 
 add_library(SHARC::SD ALIAS STM32_HAL_SD_DRIVER)
