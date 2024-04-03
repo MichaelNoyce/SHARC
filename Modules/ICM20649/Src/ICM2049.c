@@ -7,13 +7,177 @@
 
 //======================== 1. Includes ==============================================================
 
-#include "ICM20649.h"
+#include <ICM20649.h>
 
-//======================== 2. Private Variables =====================================================
+//======================== 2. Global Variables =====================================================
 
 uint8_t I2C_TX_CPLT;	//Flag signaling completion of I2C DMA transfer
 
-//======================= 3. Initializaiton Function Definitions ========================================
+uint32_t imu_sample_count;   //Keeps track of the number of samples from the IMU
+
+uint32_t fifo_sample_count;   //Keeps track of the number of samples in the FIFO Buffer
+
+uint32_t fifo_sample_complete;   //Current FIFO sample is complete
+
+uint32_t waveLogNo;
+
+uint32_t waveDirNo;
+
+uint8_t IMU_Log_On;			 //used in EXTI IRQ to determine what routine to run
+
+uint32_t loopTime;
+
+uint8_t IMU_Buffer[N_SAMPLES*12];	//Buffer to store data from the IMU
+
+uint8_t FIFO_Buffer[N_SAMPLES*12];	//Buffer to store data from the IMU
+
+//======================== 4. Static Functions Prototypes ===========================================
+
+static void MX_DMA_Init(void);
+
+static HAL_StatusTypeDef  MX_I2C1_Init(void);
+
+static void MX_GPIO_Init(void);
+
+//======================== 5. Handlers =====================================================
+
+I2C_HandleTypeDef hi2c1;
+
+DMA_HandleTypeDef hdma_i2c1_rx;
+
+DMA_HandleTypeDef hdma_i2c1_tx;
+
+//======================== 6. Static Functions Definition ===========================================
+
+/**
+  * @brief I2C1 Initialization Function
+  * @param None
+  * @retval None
+  */
+static HAL_StatusTypeDef MX_I2C1_Init(void)
+{
+
+  /* USER CODE BEGIN I2C1_Init 0 */
+	//printmsg("i2c Function Init \r\n");
+  /* USER CODE END I2C1_Init 0 */
+
+  /* USER CODE BEGIN I2C1_Init 1 */
+
+  /* USER CODE END I2C1_Init 1 */
+  hi2c1.Instance = I2C1;
+  hi2c1.Init.Timing = 	0x00100002;
+  hi2c1.Init.OwnAddress1 = 0;
+  hi2c1.Init.AddressingMode = I2C_ADDRESSINGMODE_7BIT;
+  hi2c1.Init.DualAddressMode = I2C_DUALADDRESS_DISABLE;
+  hi2c1.Init.OwnAddress2 = 0;
+  hi2c1.Init.OwnAddress2Masks = I2C_OA2_NOMASK;
+  hi2c1.Init.GeneralCallMode = I2C_GENERALCALL_DISABLE;
+  hi2c1.Init.NoStretchMode = I2C_NOSTRETCH_DISABLE;
+  if (HAL_I2C_Init(&hi2c1) != HAL_OK)
+  {
+    //Do nothing
+  }
+
+  /** Configure Analogue filter
+  */
+  if (HAL_I2CEx_ConfigAnalogFilter(&hi2c1, I2C_ANALOGFILTER_ENABLE) != HAL_OK)
+  {
+    //Error_Handler();
+  }
+
+  /** Configure Digital filter
+  */
+  if (HAL_I2CEx_ConfigDigitalFilter(&hi2c1, 0) != HAL_OK)
+  {
+	  //Do nothing
+  }
+  /* USER CODE BEGIN I2C1_Init 2 */
+  //printmsg("i2c init successful! \r\n");
+  /* USER CODE END I2C1_Init 2 */
+  return HAL_OK;
+
+}
+
+/**
+  * @brief GPIO Initialization Function
+  * @param None
+  * @retval None
+  */
+static void MX_GPIO_Init(void)
+{
+  GPIO_InitTypeDef GPIO_InitStruct = {0};
+
+  /* GPIO Ports Clock Enable */
+  __HAL_RCC_GPIOD_CLK_ENABLE();
+  __HAL_RCC_GPIOG_CLK_ENABLE();
+  HAL_PWREx_EnableVddIO2();
+  __HAL_RCC_GPIOA_CLK_ENABLE();
+  __HAL_RCC_GPIOB_CLK_ENABLE();
+
+  /*Configure GPIO pin : PD14 */
+  GPIO_InitStruct.Pin = GPIO_PIN_14;
+  GPIO_InitStruct.Mode = GPIO_MODE_IT_RISING;
+  GPIO_InitStruct.Pull = GPIO_NOPULL;
+  HAL_GPIO_Init(GPIOD, &GPIO_InitStruct);
+
+  /* EXTI interrupt init*/
+  HAL_NVIC_SetPriority(EXTI15_10_IRQn, 0, 0);
+  HAL_NVIC_EnableIRQ(EXTI15_10_IRQn);
+
+  /*Configure GPIO pin Output Level */
+  HAL_GPIO_WritePin(GPIOB, GPIO_PIN_14, GPIO_PIN_RESET);
+
+  /*Configure GPIO pin Output Level */
+  HAL_GPIO_WritePin(GPIOB, GPIO_PIN_7, GPIO_PIN_RESET);
+
+  /*Configure GPIO pins : PB14 PB7 */
+  GPIO_InitStruct.Pin = GPIO_PIN_14|GPIO_PIN_7;
+  GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
+  GPIO_InitStruct.Pull = GPIO_NOPULL;
+  GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
+  HAL_GPIO_Init(GPIOB, &GPIO_InitStruct);
+
+}
+
+
+/**
+  * Enable DMA controller clock
+  */
+static void MX_DMA_Init(void)
+{
+
+  /* DMA controller clock enable */
+  __HAL_RCC_DMAMUX1_CLK_ENABLE();
+  __HAL_RCC_DMA1_CLK_ENABLE();
+
+  /* DMA interrupt init */
+  /* DMA1_Channel1_IRQn interrupt configuration */
+  HAL_NVIC_SetPriority(DMA1_Channel1_IRQn, 0, 0);
+  HAL_NVIC_EnableIRQ(DMA1_Channel1_IRQn);
+  /* DMA1_Channel2_IRQn interrupt configuration */
+  HAL_NVIC_SetPriority(DMA1_Channel2_IRQn, 0, 0);
+  HAL_NVIC_EnableIRQ(DMA1_Channel2_IRQn);
+
+}
+
+//======================== 5. MSP Function Definitions ==================================
+/* MSP FUNCTIONS:
+ *
+ *  Functions designed to replace the _weak MSP peripheral initialization
+ *  function definitions in the HAL Library files.
+ *
+ *  NB!!!! before running the code do the following:
+ *
+ *  1. Uncomment the desired MSP Function
+ *
+ *  2. Cut the function and paste it in the stm32l4xx_hal_msp.c file
+ *
+ *  3. In the stm32l4xx_hal_msp.c file, include the header "HAL_ICM20649.h"
+ */
+
+
+
+//======================= 6. Initializaiton Function Definitions ========================================
 
 imu_status_t ICM20649_Init_IMU(uint8_t g_fsr, uint8_t a_fsr, uint8_t dlpf_acc_coeff, uint8_t dlpf_gyro_coeff)
 {
@@ -21,7 +185,10 @@ imu_status_t ICM20649_Init_IMU(uint8_t g_fsr, uint8_t a_fsr, uint8_t dlpf_acc_co
 	//Select Register Bank
 	ICM20649_Register_Bank_Select(&hi2c1, 0);
 
-	
+	//Initialise Peripherals
+	MX_DMA_Init();
+	//if(MX_I2C1_Init() != HAL_OK) return IMU_PERIPHERAL_INIT_ERROR;
+	MX_GPIO_Init();
 
 	//reset buffers and flags
 	imu_sample_count = 0;
@@ -286,8 +453,8 @@ imu_status_t ICM20649_Set_Sample_Rate(I2C_HandleTypeDef *hi2c)
 	if((configbyte &0b1) > 0)
 	{
 		smplrtdiv= (uint8_t)(GYRO_OUTPUT_RATE_DLPF_EN/SAMPLE_RATE - 1);
-	}
-	else
+		printmsg("Gyro DPLF Enabled! \r\n");
+	}else
 	{
 		smplrtdiv = (uint8_t)(GYRO_OUTPUT_RATE_DLPF_DIS/SAMPLE_RATE -1);
 	}
@@ -297,6 +464,8 @@ imu_status_t ICM20649_Set_Sample_Rate(I2C_HandleTypeDef *hi2c)
 	{
 		return IMU_I2C_ERROR;
 	}
+
+	printmsg("Gyro smplrt: %d \r\n", smplrtdiv);
 
 	configbyte = 0;
 	smplrtdiv = 0;
@@ -308,6 +477,7 @@ imu_status_t ICM20649_Set_Sample_Rate(I2C_HandleTypeDef *hi2c)
 
 	if((configbyte &0b1) > 0)
 	{
+		printmsg("Accel DPLF Enabled! \r\n");
 		smplrtdiv= (uint16_t)(ACC_OUTPUT_RATE_DLPF_EN/SAMPLE_RATE - 1);
 	}else
 	{
@@ -318,6 +488,9 @@ imu_status_t ICM20649_Set_Sample_Rate(I2C_HandleTypeDef *hi2c)
 	{
 		return IMU_I2C_ERROR;
 	}
+
+	printmsg("Accel smplrt: %d \r\n", smplrtdiv);
+
 
 	return IMU_OK;
 }
@@ -427,7 +600,7 @@ imu_status_t ICM20649_Set_PLLSrc(I2C_HandleTypeDef *hi2c, uint8_t PLL)
 	return IMU_OK;
 }
 
-imu_status_t ICM20649_Config_Interrupt_Pin( Interrupt_source_t level,uint8_t open,  uint8_t latch)
+imu_status_t ICM20649_Config_Interrupt_Pin( uint8_t level,uint8_t open,  uint8_t latch)
 {
 	ICM20649_Register_Bank_Select(&hi2c1, 0);
 

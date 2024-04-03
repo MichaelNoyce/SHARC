@@ -11,6 +11,8 @@ void SystemClock_Config(void);
 void MX_GPIO_Init(void);
 void MX_LPUART1_UART_Init(void);
 void MX_SDMMC1_SD_Init(void);
+void MX_I2C1_Init(void);
+
 
 
 #ifdef __cplusplus

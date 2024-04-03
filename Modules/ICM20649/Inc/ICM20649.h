@@ -29,10 +29,6 @@
  *
  */
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
 #ifndef HAL_ICM20649_H_
 #define HAL_ICM20649_H_
 
@@ -43,19 +39,10 @@ extern "C" {
 #include "stdint.h"			//integers
 #include "string.h"			//Mem functions
 
-//============================= 0. Handlers ===============================================
-
-extern I2C_HandleTypeDef hi2c1;
-
-extern DMA_HandleTypeDef hdma_i2c1_rx;
-
-extern DMA_HandleTypeDef hdma_i2c1_tx;
-
-
 //========================== 2. Structs & Enums ===========================================
 
 /*
- * ICM_20689_Register_t
+ * ICM_20649_Register_t
  *
  * Complete 8-bit Register Map of the ICM20649 chip.
  */
@@ -144,7 +131,7 @@ typedef enum
 	TEMP_CONFIG = 0X53,
 	MOD_CTRL_USR = 0X54,
 
-}ICM_20689_Register_t;
+}ICM_20649_Register_t;
 
 /*
  * IMU_Status_t
@@ -490,25 +477,33 @@ typedef struct
 
 //========================== 4. Global Variables ==========================================
 
-uint32_t imu_sample_count;   //Keeps track of the number of samples from the IMU
+extern uint32_t imu_sample_count;   //Keeps track of the number of samples from the IMU
 
-uint32_t fifo_sample_count;   //Keeps track of the number of samples in the FIFO Buffer
+extern uint32_t fifo_sample_count;   //Keeps track of the number of samples in the FIFO Buffer
 
-uint32_t fifo_sample_complete;   //Current FIFO sample is complete
+extern uint32_t fifo_sample_complete;   //Current FIFO sample is complete
 
-uint32_t waveLogNo;
+extern uint32_t waveLogNo;
 
-uint32_t waveDirNo;
+extern uint32_t waveDirNo;
 
-uint8_t IMU_Log_On;			 //used in EXTI IRQ to determine what routine to run
+extern uint8_t IMU_Log_On;			 //used in EXTI IRQ to determine what routine to run
 
-uint32_t loopTime;
+extern uint32_t loopTime;
+//============================= 5. Handlers ===============================================
+
+extern I2C_HandleTypeDef hi2c1;
+
+extern DMA_HandleTypeDef hdma_i2c1_rx;
+
+extern DMA_HandleTypeDef hdma_i2c1_tx;
+
 
 //============================ 6. Data Buffers ============================================
 
-uint8_t IMU_Buffer[N_SAMPLES*12];	//Buffer to store data from the IMU
+extern uint8_t IMU_Buffer[N_SAMPLES*12];	//Buffer to store data from the IMU
 
-uint8_t FIFO_Buffer[N_SAMPLES*12];	//Buffer to store data from the IMU
+extern uint8_t FIFO_Buffer[N_SAMPLES*12];	//Buffer to store data from the IMU
 
 //======================== 8. Sensor Configuration Functions =========================================
 
@@ -580,7 +575,3 @@ void ICM20649_DMA_PeriphIRQHandler(void);
 void ICM20649_FIFO_Interrupt_IRQ(void);
 void ICM20649_IntPin_IRQ();
 #endif /* HAL_ICM20649_H_ */
-
-#ifdef __cplusplus
-}
-#endif

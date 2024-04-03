@@ -7,5 +7,9 @@
         "sd_init.h": "c",
         "stm32l4xx_hal_wwdg.h": "c",
         "hal_sd.h": "c"
-    }
+    },
+
+    "editor.fontSize": 16,
+    "terminal.integrated.fontSize": 14,
+    "window.zoomLevel": 1.4,
 }
