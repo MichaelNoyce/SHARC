@@ -4,3 +4,9 @@
 [submodule "Modules/googletest"]
 	path = Modules/googletest
 	url = https://github.com/google/googletest.git
+[submodule "Modules/ICM20649"]
+	path = Modules/ICM20649
+	url = https://github.com/MichaelNoyce/ICM20649.git
+[submodule "Modules/WAVE"]
+	path = Modules/WAVE
+	url = https://github.com/MichaelNoyce/WAVE.git
