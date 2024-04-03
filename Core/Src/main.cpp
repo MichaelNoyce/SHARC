@@ -36,6 +36,7 @@ int main(void) {
 	MX_SDMMC1_SD_Init();
 	MX_FATFS_Init();
      MX_I2C1_Init(); 
+     MX_RTC_Init();
 
 	uint8_t buf[12];
 	int16_t val;
@@ -128,49 +129,85 @@ int main(void) {
     }
 
 
-  /* USER CODE END 2 */
+     int32_t accelTemp[3];
+	int32_t gyroTemp[3];
+	uint8_t tempFIFOBuf[500];
+	uint8_t imu[12] = { 0 };
+	uint8_t data_status;
+     bool IMU_On; //IMU status flag
+     RTC_TimeTypeDef gTime;
+	RTC_DateTypeDef gDate;
 
-  /* Infinite loop */
-  /* USER CODE BEGIN WHILE */
-    int32_t accelTemp[3];
-    int32_t gyroTemp[3];
-    float Ax, Ay, Az, Gx, Gy, Gz;
+	IMU_On = 1;
 
+	SD_Wave_Open(&File, &Dir, &fno, waveDirNo, waveLogNo);
 
+	if ((ICM20649_Init_IMU(GYRO_CONFIG_FSSEL_500DPS, ACC_CONFIG_AFSSEL_4G,
+	ACCEL_DPLFCFG_1, GYRO_DPLFCFG_0) == IMU_OK)) {
 
+		while (IMU_On) {
 
+			if (imu_sample_count == WAVELOGBUFNO)
+					{
+				SD_File_Close(&File); //NB Remember to close file
+				waveLogNo++;
+				imu_sample_count = 0;
+				SD_Wave_Open(&File, &Dir, &fno, waveDirNo, waveLogNo);
+				printmsg("New Wave log! \r\n");
+			}
 
-   while (1)
-  {
+			ICM20649_Is_Data_Ready(&hi2c1, &data_status);
 
-		 for (int i = 0; i < 60; i+=12)
+			if (data_status) {
 
-	       	   {
+				ICM20649_Get_IMU_RawData(&hi2c1, imu);
 
+				HAL_RTC_GetTime(&hrtc, &gTime, RTC_FORMAT_BIN);
 
-	       	           accelTemp[0] = ( (int16_t) (FIFO_Buffer[i+0] << 8) | FIFO_Buffer[i+1]);
-	       	           accelTemp[1] = ( (int16_t) (FIFO_Buffer[i+2] << 8) | FIFO_Buffer[i+3]);
-	       	           accelTemp[2] = ( (int16_t) (FIFO_Buffer[i+4] << 8) | FIFO_Buffer[i+5]);
-	       	           gyroTemp[0] = ( (int16_t) (FIFO_Buffer[i+6] << 8) | FIFO_Buffer[i+7]);
-	       	           gyroTemp[1] = ( (int16_t) (FIFO_Buffer[i+8] << 8) | FIFO_Buffer[i+9]);
-	       	           gyroTemp[2] = ( (int16_t) (FIFO_Buffer[i+10] << 8) | FIFO_Buffer[i+11]);
+				HAL_RTC_GetDate(&hrtc, &gDate, RTC_FORMAT_BIN); //unlocks time stamp
 
-	       	           	  Ax = (float)accelTemp[0]/8192*9.81;
-	       	           	  Ay = (float)accelTemp[1]/8192*9.81;
-	       	           	  Az = (float)accelTemp[2]/8192*9.81;
-	       	           	  Gx = (float)gyroTemp[0]/65.5;
-	       	           	  Gy = (float)gyroTemp[1]/65.5;
-	       	           	  Gz = (float)gyroTemp[2]/65.5;
+                    printmsg("Time: %d:%d:%d \r\n", gTime.Hours, gTime.Minutes, gTime.Seconds);
 
-	       	           	  printmsg("Ax      Ay      Az      Gx      Gy      Gz \r\n");
-	       	           	  printmsg("%.3f  %.3f  %.3f  %.3f  %.3f  %.3f \r\n", Ax, Ay, Az, Gx, Gy, Gz);
-	       	   }
+				accelTemp[0] = ((int16_t) (imu[0] << 8) | imu[1]);
+				accelTemp[1] = ((int16_t) (imu[2] << 8) | imu[3]);
+				accelTemp[2] = ((int16_t) (imu[4] << 8) | imu[5]);
+				gyroTemp[0] = ((int16_t) (imu[6] << 8) | imu[7]);
+				gyroTemp[1] = ((int16_t) (imu[8] << 8) | imu[9]);
+				gyroTemp[2] = ((int16_t) (imu[10] << 8) | imu[11]);
 
-		 fifo_sample_count = 0;
-		 break;
+				printmsg("Ax      Ay      Az      Gx      Gy      Gz \r\n");
+				printmsg("%d  %d  %d  %d  %d  %d \r\n", accelTemp[0], accelTemp[1], accelTemp[2], gyroTemp[0], gyroTemp[1],gyroTemp[2]);
 
-	   }
+				sprintf((char*) tempFIFOBuf,
+						"%d:%d:%d, %ld, %ld, %ld, %ld, %ld, %ld \r\n",
+						gTime.Hours, gTime.Minutes, gTime.Seconds, accelTemp[0],
+						accelTemp[1], accelTemp[2], gyroTemp[0], gyroTemp[1],
+						gyroTemp[2]);
+				SD_File_Write(&File, tempFIFOBuf);
 
+				imu_sample_count++;
+
+			}
+
+			if (waveLogNo == WAVELOGNO + 1) {
+				SD_File_Close(&File); //NB Remember to close file
+				waveDirNo++;
+				waveLogNo = 0;
+				break;
+			}
+
+		}
+
+	}
+
+	else {
+		printmsg("IMU Offline!\r\n");
+	}
+
+	ICM20649_Deinit_IMU();
+	SD_Unmount(SDFatFs);
+
+	IMU_On = 0;
 
     /* USER CODE END WHILE */
 

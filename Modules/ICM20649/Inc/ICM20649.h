@@ -459,7 +459,7 @@ typedef struct
 #define N_SAMPLES 1
 #define SAMPLE_SIZE 12 //12 bytes per sample ax ay az gx gy gz
 #define IMU_BUFFER_SIZE N_SAMPLES*SAMPLE_SIZE
-#define WAVELOGBUFNO 100 //Number of local buffers written to each wavelog file 5min*60sec*100Hz
+#define WAVELOGBUFNO 30000 //Number of local buffers written to each wavelog file 5min*60sec*100Hz
 #define WAVELOGNO 5 //Number of wave logs
 
 
@@ -482,10 +482,6 @@ extern uint32_t imu_sample_count;   //Keeps track of the number of samples from 
 extern uint32_t fifo_sample_count;   //Keeps track of the number of samples in the FIFO Buffer
 
 extern uint32_t fifo_sample_complete;   //Current FIFO sample is complete
-
-extern uint32_t waveLogNo;
-
-extern uint32_t waveDirNo;
 
 extern uint8_t IMU_Log_On;			 //used in EXTI IRQ to determine what routine to run
 

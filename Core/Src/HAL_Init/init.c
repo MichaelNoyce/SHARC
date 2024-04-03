@@ -8,6 +8,7 @@ extern TIM_HandleTypeDef htim1;
 extern DMA_HandleTypeDef hdma_memtomem_dma1_channel1;
 extern SD_HandleTypeDef hsd1;
 extern I2C_HandleTypeDef hi2c1;
+extern RTC_HandleTypeDef hrtc;
 
 
 /* Private function prototypes -----------------------------------------------*/
@@ -410,6 +411,50 @@ void MX_I2C1_Init(void)
   }
   /* USER CODE BEGIN I2C1_Init 2 */
   /* USER CODE END I2C1_Init 2 */
+
+}
+
+
+void MX_RTC_Init(void) {
+
+	RTC_TimeTypeDef sTime = { 0 };
+	RTC_DateTypeDef sDate = { 0 };
+	/** Initialize RTC Only
+	 */
+	hrtc.Instance = RTC;
+	hrtc.Init.HourFormat = RTC_HOURFORMAT_24;
+	hrtc.Init.AsynchPrediv = 127;
+	hrtc.Init.SynchPrediv = 255;
+	hrtc.Init.OutPut = RTC_OUTPUT_DISABLE;
+	hrtc.Init.OutPutRemap = RTC_OUTPUT_REMAP_NONE;
+	hrtc.Init.OutPutPolarity = RTC_OUTPUT_POLARITY_HIGH;
+	hrtc.Init.OutPutType = RTC_OUTPUT_TYPE_OPENDRAIN;
+	if (HAL_RTC_Init(&hrtc) != HAL_OK) {
+		Error_Handler();
+	}
+
+	/** Initialize RTC and set the Time and Date
+	 */
+	sTime.Hours = 10;
+	sTime.Minutes = 14;
+	sTime.Seconds = 0;
+	sTime.DayLightSaving = RTC_DAYLIGHTSAVING_NONE;
+	sTime.StoreOperation = RTC_STOREOPERATION_RESET;
+	if (HAL_RTC_SetTime(&hrtc, &sTime, RTC_FORMAT_BIN) != HAL_OK) {
+		Error_Handler();
+	}
+	sDate.WeekDay = RTC_WEEKDAY_FRIDAY;
+	sDate.Month = RTC_MONTH_MAY;
+	sDate.Date = 8;
+	sDate.Year = 0;
+
+	if (HAL_RTC_SetDate(&hrtc, &sDate, RTC_FORMAT_BIN) != HAL_OK) {
+		Error_Handler();
+	}
+	//clear unwanted interrupts
+	if (__HAL_RTC_WAKEUPTIMER_GET_FLAG(&hrtc, RTC_FLAG_WUTF)) {
+		__HAL_RTC_WAKEUPTIMER_CLEAR_FLAG(&hrtc, RTC_FLAG_WUTF);
+	}
 
 }
 
