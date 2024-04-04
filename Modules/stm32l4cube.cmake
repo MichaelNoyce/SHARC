@@ -17,7 +17,6 @@ set(STM32CUBEL4_HAL_INCLUDE_DIRECTORIES
 file(GLOB STM32CUBEL4_HAL_SOURCES
 	${CMAKE_SOURCE_DIR}/Modules/STM32CubeL4/Drivers/STM32L4xx_HAL_Driver/Src/*_hal*.c
 	${CMAKE_SOURCE_DIR}/Modules/STM32CubeL4/Drivers/STM32L4xx_HAL_Driver/Src/*_ll*.c
-	${CMAKE_SOURCE_DIR}/Modules/STM32CubeL4/Drivers/CMSIS/DSP/Lib/GCC #Location of arm_mathl4 library
 )
 
 # Workaround - Broken template files should not be compiled.
@@ -27,6 +26,11 @@ list(FILTER STM32CUBEL4_HAL_SOURCES EXCLUDE REGEX ".*_template.c")
 add_library(STM32CUBEL4_HAL STATIC
 	${STM32CUBEL4_HAL_SOURCES}
 )
+
+add_library(ARM_MATH_LIB STATIC IMPORTED)
+set_target_properties(ARM_MATH_LIB PROPERTIES IMPORTED_LOCATION ${CMAKE_SOURCE_DIR}/Modules/STM32CubeL4/Drivers/CMSIS/DSP/Lib/GCC/libarm_cortexM4lf_math.a)
+
+target_link_libraries(STM32CUBEL4_HAL PUBLIC ARM_MATH_LIB)
 
 set(STM32CUBEL4_HAL_COMPILE_DEFINITIONS
 	USE_HAL_DRIVER

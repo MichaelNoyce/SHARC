@@ -8,7 +8,7 @@ set(STM32_HAL_IMU_DRIVER_INCLUDE_DIRECTORIES
 )
 
 file(GLOB STM32_HAL_IMU_DRIVER_SOURCES
-	${CMAKE_SOURCE_DIR}/Modules/ICM20649/Src/*.c
+	${CMAKE_SOURCE_DIR}/Modules/ICM20649/Src/ICM20649.c
 )
 
 # Workaround - Broken template files should not be compiled.

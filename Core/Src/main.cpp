@@ -10,6 +10,7 @@ extern "C" {
 #include <stdarg.h>
 #include "stdio.h"
 #include "ICM20649.h"
+#include "WAVE.h"
 #ifdef __cplusplus 
 }
 #endif
@@ -17,6 +18,8 @@ extern "C" {
 void SystemClock_Config(void);
 void Error_Handler(void);
 
+
+// Peripheral Handles
 UART_HandleTypeDef hlpuart1;
 UART_HandleTypeDef huart4;
 DMA_HandleTypeDef hdma_uart4_rx;
@@ -29,6 +32,8 @@ HAL_StatusTypeDef  UARTStatus;
 SD_HandleTypeDef hsd1;
 
 int main(void) {
+
+     //======================== 0. Initialisation ==============================================================
 	HAL_Init();
 	SystemClock_Config();
 	MX_GPIO_Init();
@@ -38,182 +43,50 @@ int main(void) {
      MX_I2C1_Init(); 
      MX_RTC_Init();
 
-	uint8_t buf[12];
-	int16_t val;
-	imu_status_t flag;
-	float acc;
 
-	//======================== 1. Testing Initialisation ==============================================================
 
-  printmsg("IMU Test started!");
+  uint8_t errorCode = SD_Init();
+  printmsg("Error Code, %d \r\n", errorCode);
 
-  imu_status_t initStatus = ICM20649_Init_IMU(GYRO_CONFIG_FSSEL_500DPS, ACC_CONFIG_AFSSEL_4G, ACCEL_DPLFCFG_0, GYRO_DPLFCFG_0);
 
-  if(initStatus != IMU_OK)
-  {
-	  printmsg("Error in i2c init, init error %d \r\n", initStatus);
-  }
-  else
-  {
-	  printmsg("Init successful! \r\n");
-  }
+  uint32_t i = 0;
 
-  uint8_t int_status_1;
+  float32_t PSD[FFT_LENGTH/2];
+  int32_t rawData[FFT_LENGTH];
+  int32_t timeSeries[FFT_LENGTH];
 
-  if((HAL_I2C_Mem_Read(&hi2c1,IMU_Device_Address, INT_STATUS_1, 1, &int_status_1, 1, 100) != HAL_OK))
-  {
-  	 return IMU_I2C_ERROR;
-  }
-  else
-  {
-	  printmsg("INT_STATUS_1 %d \r\n", int_status_1);
-  }
+  Wave_Data_t waveData;
+  uint32_t waveDirNo  = 1;
+  uint32_t waveLogNo = 1;
 
-     uint8_t int_pin_config = 0;
-    //Print out int_config register
+  uint32_t fpointer = 0;
 
-    if(HAL_I2C_Mem_Read(&hi2c1,IMU_Device_Address, INT_PIN_CFG, I2C_MEMADD_SIZE_8BIT, &int_pin_config, 1, 100) != HAL_OK)
-     {
-   	 printmsg("i2c read error");
-          return IMU_I2C_ERROR;
-     }
-    else
+  //SD_Wave_Read(&File, rawData, waveDirNo, waveLogNo, Z_ACC, &fpointer);
+
+
+
+    for(int i=0; i<1024; i++)
     {
-   	  printmsg("INT_PIN_CONFIG: %d \r\n", int_pin_config);
+    	 printmsg("%d \r\n", rawData[i]);
     }
 
-    uint8_t user_ctrl = 0;
-    uint8_t fifo_rst = 0;
-    uint8_t fifo_en_1 = 0;
-    uint8_t fifo_en_2 = 0;
+  WelchMethod(PSD, waveDirNo);
+
+  ///singleSegmentPipeline(timeSeries, 1, 3);
+
+ //waveParamExtract(PSD, &waveData.Hm0, &waveData.TM01, &waveData.Hrms, &waveData.T0, &waveData.Tp, &waveData.M0, &waveData.M1, &waveData.M2);
+
+//   fullPipeline(waveData, waveDirNo);
+
+//  for(int i=0; i<30; i++)
+//  {
+// 	 printmsg("%f \r\n", waveData.PSD[i]);
+//  }
 
 
-    if(HAL_I2C_Mem_Read(&hi2c1,IMU_Device_Address, USER_CTRL, 1, &user_ctrl, 1, 100) != HAL_OK)
-     {
-          return IMU_I2C_ERROR;
-          printmsg("i2c read error");
-     }
-    else
-    {
-   	  printmsg("User control:  %d \r\n", user_ctrl);
-    }
+//     printmsg("DSP Pipeline Finished!\r\n");
 
-    if(HAL_I2C_Mem_Read(&hi2c1,IMU_Device_Address, FIFO_RST, 1, &fifo_rst, 1, 100) != HAL_OK)
-     {
-          return IMU_I2C_ERROR;
-          printmsg("i2c read error");
-     }
-    else
-    {
-   	  printmsg("FIFO Reset:  %d \r\n", fifo_rst);
-    }
-
-    if(HAL_I2C_Mem_Read(&hi2c1,IMU_Device_Address, FIFO_EN_1, 1, &fifo_en_1, 1, 100) != HAL_OK)
-     {
-          return IMU_I2C_ERROR;
-          printmsg("i2c read error");
-     }
-    else
-    {
-   	  printmsg("FIFO_EN_1:  %d \r\n", fifo_en_1);
-    }
-
-    if(HAL_I2C_Mem_Read(&hi2c1,IMU_Device_Address, FIFO_EN_2, 1, &fifo_en_2, 1, 100) != HAL_OK)
-     {
-          return IMU_I2C_ERROR;
-          printmsg("i2c read error");
-     }
-    else
-    {
-   	  printmsg("FIFO_EN_2: %d \r\n", fifo_en_2);
-    }
-
-
-     int32_t accelTemp[3];
-	int32_t gyroTemp[3];
-	uint8_t tempFIFOBuf[500];
-	uint8_t imu[12] = { 0 };
-	uint8_t data_status;
-     bool IMU_On; //IMU status flag
-     RTC_TimeTypeDef gTime;
-	RTC_DateTypeDef gDate;
-
-	IMU_On = 1;
-
-	SD_Wave_Open(&File, &Dir, &fno, waveDirNo, waveLogNo);
-
-	if ((ICM20649_Init_IMU(GYRO_CONFIG_FSSEL_500DPS, ACC_CONFIG_AFSSEL_4G,
-	ACCEL_DPLFCFG_1, GYRO_DPLFCFG_0) == IMU_OK)) {
-
-		while (IMU_On) {
-
-			if (imu_sample_count == WAVELOGBUFNO)
-					{
-				SD_File_Close(&File); //NB Remember to close file
-				waveLogNo++;
-				imu_sample_count = 0;
-				SD_Wave_Open(&File, &Dir, &fno, waveDirNo, waveLogNo);
-				printmsg("New Wave log! \r\n");
-			}
-
-			ICM20649_Is_Data_Ready(&hi2c1, &data_status);
-
-			if (data_status) {
-
-				ICM20649_Get_IMU_RawData(&hi2c1, imu);
-
-				HAL_RTC_GetTime(&hrtc, &gTime, RTC_FORMAT_BIN);
-
-				HAL_RTC_GetDate(&hrtc, &gDate, RTC_FORMAT_BIN); //unlocks time stamp
-
-                    printmsg("Time: %d:%d:%d \r\n", gTime.Hours, gTime.Minutes, gTime.Seconds);
-
-				accelTemp[0] = ((int16_t) (imu[0] << 8) | imu[1]);
-				accelTemp[1] = ((int16_t) (imu[2] << 8) | imu[3]);
-				accelTemp[2] = ((int16_t) (imu[4] << 8) | imu[5]);
-				gyroTemp[0] = ((int16_t) (imu[6] << 8) | imu[7]);
-				gyroTemp[1] = ((int16_t) (imu[8] << 8) | imu[9]);
-				gyroTemp[2] = ((int16_t) (imu[10] << 8) | imu[11]);
-
-				printmsg("Ax      Ay      Az      Gx      Gy      Gz \r\n");
-				printmsg("%d  %d  %d  %d  %d  %d \r\n", accelTemp[0], accelTemp[1], accelTemp[2], gyroTemp[0], gyroTemp[1],gyroTemp[2]);
-
-				sprintf((char*) tempFIFOBuf,
-						"%d:%d:%d, %ld, %ld, %ld, %ld, %ld, %ld \r\n",
-						gTime.Hours, gTime.Minutes, gTime.Seconds, accelTemp[0],
-						accelTemp[1], accelTemp[2], gyroTemp[0], gyroTemp[1],
-						gyroTemp[2]);
-				SD_File_Write(&File, tempFIFOBuf);
-
-				imu_sample_count++;
-
-			}
-
-			if (waveLogNo == WAVELOGNO + 1) {
-				SD_File_Close(&File); //NB Remember to close file
-				waveDirNo++;
-				waveLogNo = 0;
-				break;
-			}
-
-		}
-
-	}
-
-	else {
-		printmsg("IMU Offline!\r\n");
-	}
-
-	ICM20649_Deinit_IMU();
-	SD_Unmount(SDFatFs);
-
-	IMU_On = 0;
-
-    /* USER CODE END WHILE */
-
-    /* USER CODE BEGIN 3 */
-
-  /* USER CODE END 3 */
+//   /* USER CODE END 3 */
 }
 
 void printmsg(const char *format,...) {

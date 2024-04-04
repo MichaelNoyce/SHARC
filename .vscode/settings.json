@@ -6,7 +6,9 @@
         "stm32l4xx_hal.h": "c",
         "sd_init.h": "c",
         "stm32l4xx_hal_wwdg.h": "c",
-        "hal_sd.h": "c"
+        "hal_sd.h": "c",
+        "icm20649.h": "c",
+        "arm_math.h": "c"
     },
 
     "editor.fontSize": 16,
