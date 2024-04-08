@@ -60,6 +60,21 @@ RTC_DateTypeDef gDate;
 	//MX_USART3_UART_Init();
 //=================================== 1. END ====================================//
 
+//======================= 2. POWER AND RESET STATE CHECK ========================//
+
+/*
+	* When system powers on, check for any asynchronous resets that
+	* may have occured. Use this area to add in any reset handling
+	*/
+if (__HAL_RCC_GET_FLAG(RCC_FLAG_BORRST) == SET) {
+	BOR_Handler();
+}
+uint8_t flag = __HAL_RCC_GET_PORRST_FLAG();
+if (flag == SET) {
+	printmsg("Software Reset Detected. Initializing main program...\r\n");
+	POR_Handler();
+}
+//=================================== 2. END ====================================//
 }
 
 void printmsg(const char *format,...) {

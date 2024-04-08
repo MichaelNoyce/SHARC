@@ -17,6 +17,17 @@ extern "C" {
 #define BMP_SPI_GPIO_PORT GPIOA
 #define BMP_SPI_PORT SPI1
 
+// Custom flag set detction for Event Power on Reset (PWR_BORST, PWR_SWRST, PWR_NRST Set )
+#define RCC_FLAG_PORRST (0b101<<26)
+#define __HAL_RCC_GET_PORRST_FLAG() ((READ_REG(RCC->CSR)&(RCC_FLAG_PORRST))>>26)&&0b111
+
+//define GPIO Port for LED2
+#define LD2_GPIO_Port GPIOB
+
+//define GPIO Pin for LED2
+#define LD2_Pin GPIO_PIN_7
+
+
 /**
  * @brief Configure system clock
  * 
@@ -65,6 +76,22 @@ void MX_RTC_Init(void);
  * 
  */
 void MX_SPI1_Init(void);
+
+/**
+ * @brief BROWN OUT RESET HANDLER:
+ *
+ * NB: Device must have Vbrownout threshold set in option bytes
+ *
+ *  Routines that runs when device recovers from a brown out Vbat < Vbrountout
+ */
+void BOR_Handler(void);
+
+/**
+ * @brief POWER ON RESET HANDLER:
+ *
+ * Routines that runs when device is powered on
+ */
+void POR_Handler(void);
 
 #ifdef __cplusplus
 }

@@ -495,9 +495,51 @@ void MX_SPI1_Init(void) {
   }
 }
 
-/* USER CODE BEGIN 4 */
+/*
+ * @brief: Brown Out Reset Handler for BUOY (case Vbat < Vbrownoutthreshold)
+ */
+void BOR_Handler(void)
+{
+	  //clear flags
+	  __HAL_RCC_CLEAR_RESET_FLAGS();
+	  // transmit log to PC
 
-/* USER CODE END 4 */
+	  char* msg= "Warning! Device encountered a Brown Out. Exiting Program...\r\n";
+	  HAL_UART_Transmit(&hlpuart1,(uint8_t*)msg,strlen(msg),100);
+	  //perform system reset
+	  POR_Handler();
+	  HAL_NVIC_SystemReset();
+	  /*
+	   * Failure to perform system reset causes device to enter an infinite loop
+	   */
+	  while(1)
+	  {
+		  HAL_GPIO_TogglePin(LD2_GPIO_Port,LD2_Pin);
+		  HAL_Delay(500);
+	  }
+}
+
+/*
+ * @brief: Power On Reset Handler for BUOY (CASE: NRST Line Pulled low)
+ */
+void POR_Handler(void)
+{
+	  //clear flags
+	  __HAL_RCC_CLEAR_RESET_FLAGS();
+	  //clear the back up registers
+	  HAL_PWR_EnableBkUpAccess();
+	  __HAL_RCC_BACKUPRESET_FORCE();
+	  __HAL_RCC_BACKUPRESET_RELEASE();
+	  HAL_PWR_DisableBkUpAccess();
+	  SystemClock_Config();
+
+	  //deactivate and disable wake up timers
+	  HAL_PWREx_DisableInternalWakeUpLine();
+	  /* Clear PWR wake up Flag */
+	 __HAL_PWR_CLEAR_FLAG(PWR_FLAG_WU);
+	 __HAL_PWR_CLEAR_FLAG(PWR_FLAG_SB);
+	  //reinitialise the clock
+}
 
 /**
   * @brief  This function is executed in case of error occurrence.
