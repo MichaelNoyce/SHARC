@@ -9,6 +9,7 @@ extern DMA_HandleTypeDef hdma_memtomem_dma1_channel1;
 extern SD_HandleTypeDef hsd1;
 extern I2C_HandleTypeDef hi2c1;
 extern RTC_HandleTypeDef hrtc;
+extern SPI_HandleTypeDef hspi1; 
 
 
 /* Private function prototypes -----------------------------------------------*/
@@ -19,6 +20,7 @@ void MX_LPUART1_UART_Init(void);
 void MX_UART4_Init(void);
 void MX_TIM1_Init(void);
 void MX_SDMMC1_SD_Init(void);
+void MX_SPI1_Init(void);
 /**
   * @brief System Clock Configuration
   * @retval None
@@ -331,7 +333,15 @@ void  MX_GPIO_Init(void)
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
   HAL_GPIO_Init(GPIOB, &GPIO_InitStruct);
 
-/* USER CODE END MX_GPIO_Init_2 */
+    /*Configure GPIO pin Output Level */
+  HAL_GPIO_WritePin(SPI_CS_GPIO_Port, SPI_CS_Pin, GPIO_PIN_SET);
+
+  /*Configure GPIO pin : SPI_CS_PIN_Pin */
+  GPIO_InitStruct.Pin = SPI_CS_Pin;
+  GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
+  GPIO_InitStruct.Pull = GPIO_PULLUP;
+  GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_VERY_HIGH;
+  HAL_GPIO_Init(SPI_CS_GPIO_Port, &GPIO_InitStruct);
 }
 
 
@@ -456,6 +466,33 @@ void MX_RTC_Init(void) {
 		__HAL_RTC_WAKEUPTIMER_CLEAR_FLAG(&hrtc, RTC_FLAG_WUTF);
 	}
 
+}
+
+/*
+ * @brief SPI Init Function
+ * @param non
+ * @retval HAL_StatusTypeDef
+ */
+void MX_SPI1_Init(void) {
+
+  /* SPI1 parameter configuration*/
+  hspi1.Instance = BMP_SPI_PORT;
+  hspi1.Init.Mode = SPI_MODE_MASTER;
+  hspi1.Init.Direction = SPI_DIRECTION_2LINES;
+  hspi1.Init.DataSize = SPI_DATASIZE_8BIT;
+  hspi1.Init.CLKPolarity = SPI_POLARITY_LOW;
+  hspi1.Init.CLKPhase = SPI_PHASE_1EDGE;
+  hspi1.Init.NSS = SPI_NSS_SOFT;
+  hspi1.Init.BaudRatePrescaler = SPI_BAUDRATEPRESCALER_64;
+  hspi1.Init.FirstBit = SPI_FIRSTBIT_MSB;
+  hspi1.Init.TIMode = SPI_TIMODE_DISABLE;
+  hspi1.Init.CRCCalculation = SPI_CRCCALCULATION_DISABLE;
+  hspi1.Init.CRCPolynomial = 7;
+  hspi1.Init.CRCLength = SPI_CRC_LENGTH_DATASIZE;
+  hspi1.Init.NSSPMode = SPI_NSS_PULSE_ENABLE;
+  if (HAL_SPI_Init(&hspi1) != HAL_OK)
+  {
+  }
 }
 
 /* USER CODE BEGIN 4 */
