@@ -40,63 +40,25 @@ int main(void) {
      //======================== 0. Initialisation ==============================================================
 HAL_Init();
 SystemClock_Config();
-MX_GPIO_Init();
-MX_LPUART1_UART_Init(); 
-MX_SDMMC1_SD_Init();	//Test single segment
-MX_FATFS_Init();
-MX_I2C1_Init(); 
-MX_RTC_Init();
+//GPS  Init Routine
+GPS_Data_t Gdata;
+RTC_TimeTypeDef gTime;
+RTC_DateTypeDef gDate;
 
-	//GPS  Init Routine
-	GPS_Data_t Gdata;
-	RTC_TimeTypeDef gTime;
-	RTC_DateTypeDef gDate;
 
-// Environmental Sensor Init Routine
-	BMP_Init_Typedef BMP_InitStruct = { 0 };
-	//configure device for environmental sensing
-	BMP_InitStruct.BMP_Pressure_OverSample = BMP280_CTRLMEAS_OSRSP_OS_1;
-	BMP_InitStruct.BMP_Temperature_OverSample = BMP280_CTRLMEAS_OSRST_OS_1;
-	BMP_InitStruct.BMP_IIR_FILTER_COEFFICIENTS = BMP280_CONFIG_FILTER_COEFF_OFF;
-	BMP_InitStruct.BMP_Power_Mode = BMP280_CTRLMEAS_MODE_FORCED;
-	if (BMP280_Init(&BMP_InitStruct) == BMP_OK) {
-		printmsg("Environmental Sensor Online!\r\n");
-		//create variables
-		uint32_t temp, press;
-		int32_t t_fine;
-		for (int i = 0; i < 2; ++i) //60 second compensation period for averaging
-				{
-			BMP280_Force_Measure(&temp, &press);		//trigger conversion
-			Gdata.env_Temp = BMP280_Compensate_Temp(temp, &t_fine,
-					bmp.Factory_Trim);			//compensate temperature
-			Gdata.atm_Press = BMP280_Compensate_Pressure(press, t_fine,
-					bmp.Factory_Trim) / 256;	//compensate pressure
-			HAL_Delay(1000);
-
-		}
-		printmsg("Temp = %ld�C \t Pressure = %lu Pa \r\n", Gdata.env_Temp,
-				Gdata.atm_Press);
-
-		//Store environmental samples
-		uint8_t tempENVBuf[200];
-		SD_ENV_Open(&File, &Dir, &fno, envDirNo, envLogNo);
-		HAL_RTC_GetTime(&hrtc, &gTime, RTC_FORMAT_BIN);
-		sprintf((char*) tempENVBuf, "%d:%d:%d, %ld, %lu \r\n", gTime.Hours,
-				gTime.Minutes, gTime.Seconds, Gdata.env_Temp, Gdata.atm_Press);
-		SD_File_Write(&File, tempENVBuf);
-		SD_File_Close(&File);
-		SD_Unmount(SDFatFs);
-		envLogNo++;
-
-		if(envLogNo == 48)
-		{
-			envDirNo++;
-			envLogNo = 1;
-		}
-
-	} else {
-		printmsg("BMP280 offline! \r\n");
-	}
+//======================== 1. SYSTEM INIT & CLOCK CONFIG ========================//
+	HAL_Init();		//Init Flash prefetch, systick timer, NVIC and LL functions
+	SystemClock_Config();	//configure clock
+	MX_GPIO_Init();
+	MX_LPUART1_UART_Init(); 
+	MX_SDMMC1_SD_Init();	//Test single segment
+	MX_FATFS_Init();
+	MX_I2C1_Init(); 
+	MX_RTC_Init();
+	printmsg("SHARC BUOY STARTING! \r\n");
+	HAL_GPIO_WritePin(GPIOB, GPIO_PIN_7, GPIO_PIN_SET);
+	//MX_USART3_UART_Init();
+//=================================== 1. END ====================================//
 
 }
 
