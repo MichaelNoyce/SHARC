@@ -541,6 +541,82 @@ void POR_Handler(void)
 	  //reinitialise the clock
 }
 
+void set_WUP_Pin(uint32_t Pin, PinMode_typedef mode)
+{
+
+	GPIO_TypeDef *Pin_Port;
+	IRQn_Type WUP_IRQn;
+	GPIO_InitTypeDef GPIO_InitStruct;
+	switch (Pin) {
+		case PWR_WAKEUP_PIN1:
+			__HAL_RCC_GPIOA_CLK_ENABLE();
+			Pin_Port = GPIOA;
+			GPIO_InitStruct.Pin = GPIO_PIN_0;
+			WUP_IRQn = EXTI0_IRQn;
+			break;
+		case PWR_WAKEUP_PIN2:
+			__HAL_RCC_GPIOC_CLK_ENABLE();
+			Pin_Port = GPIOC;
+			GPIO_InitStruct.Pin = GPIO_PIN_13;
+			WUP_IRQn = EXTI15_10_IRQn;
+			break;
+		case PWR_WAKEUP_PIN3:
+			__HAL_RCC_GPIOE_CLK_ENABLE();
+			Pin_Port = GPIOE;
+			GPIO_InitStruct.Pin = GPIO_PIN_6;
+			WUP_IRQn = EXTI9_5_IRQn;
+			break;
+		case PWR_WAKEUP_PIN4:
+			__HAL_RCC_GPIOA_CLK_ENABLE();
+			GPIO_InitStruct.Pin = GPIO_PIN_2;
+			Pin_Port = GPIOA;
+			WUP_IRQn = EXTI2_IRQn;
+			break;
+		case PWR_WAKEUP_PIN5:
+			__HAL_RCC_GPIOC_CLK_ENABLE();
+			Pin_Port = GPIOC;
+			GPIO_InitStruct.Pin = GPIO_PIN_5;
+			WUP_IRQn = EXTI9_5_IRQn;
+			break;
+		default:
+			break;
+	}
+	//configure pin for exti map
+
+
+	GPIO_InitStruct.Mode = GPIO_MODE_IT_RISING;
+	GPIO_InitStruct.Pull = GPIO_PULLDOWN;
+	GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_HIGH;
+	HAL_GPIO_Init(Pin_Port,&GPIO_InitStruct);
+	//set NVIC interrupt
+    HAL_NVIC_SetPriority(WUP_IRQn, 0x0F, 0);
+    HAL_NVIC_EnableIRQ(WUP_IRQn);
+    HAL_NVIC_ClearPendingIRQ(WUP_IRQn);
+    //enable wup in PWR register
+    __HAL_RCC_PWR_CLK_ENABLE();
+    if(mode == MODE_WUP)
+    {
+    	__HAL_RCC_PWR_CLK_ENABLE();
+    	HAL_PWR_EnableWakeUpPin(Pin);
+    	//clear unwanted interrupts
+
+    }else if (mode == MODE_EXTI)
+    {
+    	HAL_PWR_DisableWakeUpPin(Pin);
+    }
+   	__HAL_PWR_CLEAR_FLAG(PWR_FLAG_WUF1);
+    __HAL_PWR_CLEAR_FLAG(PWR_FLAG_WUF2);
+    __HAL_PWR_CLEAR_FLAG(PWR_FLAG_WUF3);
+    __HAL_PWR_CLEAR_FLAG(PWR_FLAG_WUF4);
+    __HAL_PWR_CLEAR_FLAG(PWR_FLAG_WUF5);
+    __HAL_GPIO_EXTI_CLEAR_IT(EXTI_LINE_5);
+    __HAL_GPIO_EXTI_CLEAR_IT(EXTI_LINE_13);
+    __HAL_GPIO_EXTI_CLEAR_IT(EXTI_LINE_0);
+   	__HAL_GPIO_EXTI_CLEAR_IT(EXTI_LINE_2);
+   	__HAL_GPIO_EXTI_CLEAR_IT(EXTI_LINE_6);
+	__HAL_RCC_PWR_CLK_DISABLE();
+}
+
 /**
   * @brief  This function is executed in case of error occurrence.
   * @retval None
