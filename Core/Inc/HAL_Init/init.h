@@ -47,7 +47,9 @@ extern "C" {
 
 #define __SET_SAMPLE_COUNT(count)  WRITE_REG(RTC->BKP0R, (RTC->BKP0R &0xFF)|((count)<<8))
 
-//===================== 2. Type definitions ====================================
+//===================== 3. Variable declarations ====================================
+
+//===================== 4. Type definitions ====================================
 
 /*
  * 							PWR_MODE_t
@@ -106,7 +108,7 @@ typedef enum
    MODE_EXTI
 } PinMode_typedef;
 
-//============================ 3. Function Prototypes ============================
+//============================ 5. Function Prototypes ============================
 
 /**
  * @brief Configure system clock
