@@ -10,3 +10,12 @@
 [submodule "Modules/WAVE"]
 	path = Modules/WAVE
 	url = https://github.com/MichaelNoyce/WAVE.git
+[submodule "Modules/BMP280"]
+	path = Modules/BMP280
+	url = https://github.com/MichaelNoyce/BMP280.git
+[submodule "Modules/RB9603"]
+	path = Modules/RB9603
+	url = https://github.com/MichaelNoyce/RB9603.git
+[submodule "Modules/SHARC_M9N_Driver"]
+	path = Modules/SHARC_M9N_Driver
+	url = https://github.com/LawrenceStanton/SHARC_M9N_Driver.git
